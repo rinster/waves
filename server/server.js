@@ -13,7 +13,7 @@ const async = require('async');
 const mongoose = require('mongoose');
 require('dotenv').config(); //Access .env file 
 mongoose.Promise = global.Promise;
-mongoose.connect(process.env.DATABASE) //Grab mongoDB path from .env
+mongoose.connect(process.env.MONGODB_URI) //Grab mongoDB path from .env
 
 // ===============================
 //          Models
@@ -46,14 +46,10 @@ cloudinary.config({
     api_secret: process.env.CLOUD_API_SECRET
 })
 
-// ===============================
-// **Enable Cross Domain Script**
-//  This allows for the server and
-//  the client server to run 
-// concurrently and allows cross 
-// doman scripting
-//================================
-// // ///FUNCTION --- All Cross Domain Origins
+// Tells server where to find the static folders
+app.use(express.static('client/build'));
+
+// // ///FUNCTION --- All Cross Domain Origins[development]
 app.all('/', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "X-Requested-With");
@@ -489,6 +485,14 @@ app.post('/api/site/site_data', auth, admin, (req,res)=>{
         }
     )
 })
+
+//DEFAULT ROUTING to send to client
+if(process.env.NODE_ENV === 'Production') {
+    const path = require('path');
+    app.get('/*', (req,res)=>{
+        res.sendfile(path.resolve(__dirname,'../client', 'build', 'index.html'))
+    })
+}
 
 // ===============================
 //          Port
